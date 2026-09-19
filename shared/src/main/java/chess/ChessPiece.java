@@ -54,9 +54,8 @@ public class ChessPiece {
      * @return Collection of valid moves
      */
     public Collection<ChessMove> pieceMoves(ChessBoard board, ChessPosition myPosition) {
-        ChessPiece piece = board.getPiece(myPosition);
 
-        if (piece.getPieceType() == PieceType.ROOK) {
+        if (type == PieceType.ROOK) {
             RookMovesCalculator calculator = new RookMovesCalculator();
             return calculator.pieceMoves(board, myPosition);
         }
@@ -80,6 +79,12 @@ public class ChessPiece {
             KnightMovesCalculator calculator = new KnightMovesCalculator();
             return calculator.pieceMoves(board, myPosition);
         }
+
+        if (type == PieceType.PAWN) {
+            PawnMovesCalculator calculator = new PawnMovesCalculator();
+            return calculator.pieceMoves(board, myPosition);
+        }
+
         return List.of();
     }
 
