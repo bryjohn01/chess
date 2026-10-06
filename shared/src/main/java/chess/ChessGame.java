@@ -123,22 +123,7 @@ public class ChessGame {
             return false;
         }
 
-        for (int row = 1; row <= 8; row++) {
-            for (int col = 1; col <= 8; col++) {
-                ChessPosition position = new ChessPosition(row, col);
-                ChessPiece piece = board.getPiece(position);
-
-                if (piece != null && piece.getTeamColor() == teamColor) {
-                    Collection<ChessMove> moves = validMoves(position);
-
-                    if (!moves.isEmpty()) {
-                        return false;
-                    }
-                }
-            }
-        }
-
-        return true;
+        return hasLegalMoves(teamColor);
     }
 
     /**
@@ -153,22 +138,7 @@ public class ChessGame {
             return false;
         }
 
-        for (int row = 1; row <= 8; row++) {
-            for (int col = 1; col <= 8; col++) {
-                ChessPosition position = new ChessPosition(row, col);
-                ChessPiece piece = board.getPiece(position);
-
-                if (piece != null && piece.getTeamColor() == teamColor) {
-                    Collection<ChessMove> moves = validMoves(position);
-
-                    if (!moves.isEmpty()) {
-                        return false;
-                    }
-                }
-            }
-        }
-
-        return true;
+        return hasLegalMoves(teamColor);
     }
 
     /**
@@ -246,6 +216,25 @@ public class ChessGame {
         }
 
         return false;
+    }
+
+    private boolean hasLegalMoves(TeamColor teamColor) {
+        for (int row = 1; row <= 8; row++) {
+            for (int col = 1; col <= 8; col++) {
+                ChessPosition position = new ChessPosition(row, col);
+                ChessPiece piece = board.getPiece(position);
+
+                if (piece != null && piece.getTeamColor() == teamColor) {
+                    Collection<ChessMove> moves = validMoves(position);
+
+                    if (!moves.isEmpty()) {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        return true;
     }
 
     @Override
