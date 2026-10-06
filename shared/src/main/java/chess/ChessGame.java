@@ -1,6 +1,7 @@
 package chess;
 
 import java.util.Collection;
+import java.util.ArrayList;
 
 /**
  * A class that can manage a chess game, making moves on a board
@@ -51,7 +52,25 @@ public class ChessGame {
      * startPosition
      */
     public Collection<ChessMove> validMoves(ChessPosition startPosition) {
-        throw new RuntimeException("Not implemented");
+        ChessPiece piece = board.getPiece(startPosition);
+
+        if (piece == null) {
+            return null;
+        }
+
+        Collection<ChessMove> pieceMoves = piece.pieceMoves(board, startPosition);
+        Collection<ChessMove> validMoves = new ArrayList<>();
+
+        for (ChessMove move : pieceMoves) {
+            ChessBoard boardCopy = board.clone();
+            movePiece(boardCopy, move);
+
+            if (!isInCheck(piece.getTeamColor(), boardCopy)) {
+                validMoves.add(move);
+            }
+        }
+
+        return validMoves;
     }
 
     /**
@@ -71,30 +90,7 @@ public class ChessGame {
      * @return True if the specified team is in check
      */
     public boolean isInCheck(TeamColor teamColor) {
-        ChessPosition kingPosition = findKing(teamColor);
-
-        if (kingPosition == null) {
-            return false;
-        }
-
-        for (int row = 1; row <= 8; row++) {
-            for (int col = 1; col <= 8; col++) {
-                ChessPosition position = new ChessPosition(row, col);
-                ChessPiece piece = board.getPiece(position);
-
-                if (piece != null && piece.getTeamColor() != teamColor) {
-                    Collection<ChessMove> moves = piece.pieceMoves(board, position);
-
-                    for (ChessMove move : moves) {
-                        if (move.getEndPosition().equals(kingPosition)) {
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-
-        return false;
+        return isInCheck(teamColor, board);
     }
 
     /**
@@ -136,11 +132,11 @@ public class ChessGame {
         return board;
     }
 
-    private ChessPosition findKing(TeamColor teamColor) {
+    private ChessPosition findKing(TeamColor teamColor, ChessBoard targetBoard) {
         for (int row = 1; row <= 8; row++) {
             for (int col = 1; col <= 8; col++) {
                 ChessPosition position = new ChessPosition(row, col);
-                ChessPiece piece = board.getPiece(position);
+                ChessPiece piece = targetBoard.getPiece(position);
 
                 if (piece != null
                         && piece.getTeamColor() == teamColor
@@ -151,5 +147,47 @@ public class ChessGame {
         }
 
         return null;
+    }
+
+    private void movePiece(ChessBoard targetBoard, ChessMove move) {
+        ChessPiece piece = targetBoard.getPiece(move.getStartPosition());
+
+        targetBoard.addPiece(move.getStartPosition(), null);
+
+        if (move.getPromotionPiece() != null) {
+            piece = new ChessPiece(
+                    piece.getTeamColor(),
+                    move.getPromotionPiece()
+            );
+        }
+
+        targetBoard.addPiece(move.getEndPosition(), piece);
+    }
+
+    private boolean isInCheck(TeamColor teamColor, ChessBoard targetBoard) {
+        ChessPosition kingPosition = findKing(teamColor, targetBoard);
+
+        if (kingPosition == null) {
+            return false;
+        }
+
+        for (int row = 1; row <= 8; row++) {
+            for (int col = 1; col <= 8; col++) {
+                ChessPosition position = new ChessPosition(row, col);
+                ChessPiece piece = targetBoard.getPiece(position);
+
+                if (piece != null && piece.getTeamColor() != teamColor) {
+                    Collection<ChessMove> moves = piece.pieceMoves(targetBoard, position);
+
+                    for (ChessMove move : moves) {
+                        if (move.getEndPosition().equals(kingPosition)) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 }
