@@ -199,4 +199,51 @@ public class UserServiceTest {
             userService.login("bryce", "");
         });
     }
+
+    @Test
+    public void logoutSuccess() throws DataAccessException {
+        UserDAO userDAO = new MemoryUserDAO();
+        AuthDAO authDAO = new MemoryAuthDAO();
+
+        UserService userService = new UserService(userDAO, authDAO);
+
+        // Create an authentication token
+        AuthData auth = new AuthData("test-token", "bryce");
+        authDAO.createAuth(auth);
+
+        // Verify the token exists
+        assertNotNull(authDAO.getAuth("test-token"));
+
+        // Log out
+        userService.logout("test-token");
+
+        // Verify the token was deleted
+        assertNull(authDAO.getAuth("test-token"));
+    }
+
+    @Test
+    public void logoutInvalidToken() throws DataAccessException {
+        UserDAO userDAO = new MemoryUserDAO();
+        AuthDAO authDAO = new MemoryAuthDAO();
+
+        UserService userService = new UserService(userDAO, authDAO);
+
+        // Attempt to log out with a nonexistent token
+        assertThrows(SecurityException.class, () -> {
+            userService.logout("invalid-token");
+        });
+    }
+
+    @Test
+    public void logoutMissingToken() {
+        UserDAO userDAO = new MemoryUserDAO();
+        AuthDAO authDAO = new MemoryAuthDAO();
+
+        UserService userService = new UserService(userDAO, authDAO);
+
+        // Attempt to log out without an authentication token
+        assertThrows(SecurityException.class, () -> {
+            userService.logout(null);
+        });
+    }
 }
