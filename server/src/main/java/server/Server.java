@@ -14,6 +14,7 @@ import service.UserService;
 import com.google.gson.Gson;
 import io.javalin.json.JsonMapper;
 import java.lang.reflect.Type;
+import handler.LoginHandler;
 
 public class Server {
 
@@ -50,12 +51,16 @@ public class Server {
         // Create the registration service and handler
         UserService userService = new UserService(userDAO, authDAO);
         RegisterHandler registerHandler = new RegisterHandler(userService);
+        LoginHandler loginHandler = new LoginHandler(userService);
 
-        // Register the Clear Database endpoint
+        // Clear Database
         javalin.delete("/db", clearHandler::clear);
 
-        // Register the user registration endpoint
+        // Register user
         javalin.post("/user", registerHandler::register);
+
+        // Login user
+        javalin.post("/session", loginHandler::login);
     }
 
     public int run(int desiredPort) {
