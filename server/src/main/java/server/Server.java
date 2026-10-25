@@ -15,6 +15,7 @@ import com.google.gson.Gson;
 import io.javalin.json.JsonMapper;
 import java.lang.reflect.Type;
 import handler.LoginHandler;
+import handler.LogoutHandler;
 
 public class Server {
 
@@ -52,6 +53,7 @@ public class Server {
         UserService userService = new UserService(userDAO, authDAO);
         RegisterHandler registerHandler = new RegisterHandler(userService);
         LoginHandler loginHandler = new LoginHandler(userService);
+        LogoutHandler logoutHandler = new LogoutHandler(userService);
 
         // Clear Database
         javalin.delete("/db", clearHandler::clear);
@@ -61,6 +63,9 @@ public class Server {
 
         // Login user
         javalin.post("/session", loginHandler::login);
+
+        // Logout user
+        javalin.delete("/session", logoutHandler::logout);
     }
 
     public int run(int desiredPort) {
