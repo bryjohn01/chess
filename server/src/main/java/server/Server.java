@@ -9,13 +9,34 @@ import dataaccess.UserDAO;
 import handler.ClearHandler;
 import io.javalin.Javalin;
 import service.ClearService;
+import handler.RegisterHandler;
+import service.UserService;
+import com.google.gson.Gson;
+import io.javalin.json.JsonMapper;
+import java.lang.reflect.Type;
 
 public class Server {
 
     private final Javalin javalin;
 
     public Server() {
-        javalin = Javalin.create(config -> config.staticFiles.add("web"));
+        javalin = Javalin.create(config -> {
+            config.staticFiles.add("web");
+
+            Gson gson = new Gson();
+
+            config.jsonMapper(new JsonMapper() {
+                @Override
+                public String toJsonString(Object obj, Type type) {
+                    return gson.toJson(obj, type);
+                }
+
+                @Override
+                public <T> T fromJsonString(String json, Type targetType) {
+                    return gson.fromJson(json, targetType);
+                }
+            });
+        });
 
         // Create the data access objects
         UserDAO userDAO = new MemoryUserDAO();
@@ -26,8 +47,15 @@ public class Server {
         ClearService clearService = new ClearService(userDAO, authDAO, gameDAO);
         ClearHandler clearHandler = new ClearHandler(clearService);
 
+        // Create the registration service and handler
+        UserService userService = new UserService(userDAO, authDAO);
+        RegisterHandler registerHandler = new RegisterHandler(userService);
+
         // Register the Clear Database endpoint
         javalin.delete("/db", clearHandler::clear);
+
+        // Register the user registration endpoint
+        javalin.post("/user", registerHandler::register);
     }
 
     public int run(int desiredPort) {
