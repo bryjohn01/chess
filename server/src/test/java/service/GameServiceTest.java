@@ -181,4 +181,187 @@ public class GameServiceTest {
         // Verify that no game was created
         assertTrue(gameDAO.listGames().isEmpty());
     }
+
+    @Test
+    public void joinGameSuccessWhite() throws DataAccessException {
+        AuthDAO authDAO = new MemoryAuthDAO();
+        GameDAO gameDAO = new MemoryGameDAO();
+
+        GameService gameService = new GameService(gameDAO, authDAO);
+
+        // Create a valid authentication token
+        AuthData auth = new AuthData("test-token", "bryce");
+        authDAO.createAuth(auth);
+
+        // Create a chess game
+        int gameID = gameService.createGame("test-token", "My Chess Game");
+
+        // Join the game as WHITE
+        gameService.joinGame("test-token", "WHITE", gameID);
+
+        // Retrieve the updated game
+        GameData game = gameDAO.getGame(gameID);
+
+        // Verify the player joined correctly
+        assertNotNull(game);
+        assertEquals("bryce", game.whiteUsername());
+        assertNull(game.blackUsername());
+        assertEquals("My Chess Game", game.gameName());
+        assertNotNull(game.game());
+    }
+
+    @Test
+    public void joinGameSuccessBlack() throws DataAccessException {
+        AuthDAO authDAO = new MemoryAuthDAO();
+        GameDAO gameDAO = new MemoryGameDAO();
+
+        GameService gameService = new GameService(gameDAO, authDAO);
+
+        // Create a valid authentication token
+        AuthData auth = new AuthData("test-token", "bryce");
+        authDAO.createAuth(auth);
+
+        // Create a chess game
+        int gameID = gameService.createGame("test-token", "My Chess Game");
+
+        // Join the game as BLACK
+        gameService.joinGame("test-token", "BLACK", gameID);
+
+        // Retrieve the updated game
+        GameData game = gameDAO.getGame(gameID);
+
+        // Verify the player joined correctly
+        assertNotNull(game);
+        assertNull(game.whiteUsername());
+        assertEquals("bryce", game.blackUsername());
+        assertEquals("My Chess Game", game.gameName());
+        assertNotNull(game.game());
+    }
+
+    @Test
+    public void joinGamePositionAlreadyTaken() throws DataAccessException {
+        AuthDAO authDAO = new MemoryAuthDAO();
+        GameDAO gameDAO = new MemoryGameDAO();
+
+        GameService gameService = new GameService(gameDAO, authDAO);
+
+        // Create authentication tokens for two users
+        authDAO.createAuth(new AuthData("token-one", "bryce"));
+        authDAO.createAuth(new AuthData("token-two", "opponent"));
+
+        // Create a chess game
+        int gameID = gameService.createGame("token-one", "My Chess Game");
+
+        // First user joins as WHITE
+        gameService.joinGame("token-one", "WHITE", gameID);
+
+        // Second user attempts to take the WHITE position
+        assertThrows(IllegalStateException.class, () -> {
+            gameService.joinGame("token-two", "WHITE", gameID);
+        });
+
+        // Verify the original player still owns the position
+        GameData game = gameDAO.getGame(gameID);
+
+        assertEquals("bryce", game.whiteUsername());
+        assertNull(game.blackUsername());
+    }
+
+    @Test
+    public void joinGameInvalidColor() throws DataAccessException {
+        AuthDAO authDAO = new MemoryAuthDAO();
+        GameDAO gameDAO = new MemoryGameDAO();
+
+        GameService gameService = new GameService(gameDAO, authDAO);
+
+        // Create a valid authentication token
+        authDAO.createAuth(new AuthData("test-token", "bryce"));
+
+        // Create a chess game
+        int gameID = gameService.createGame("test-token", "My Chess Game");
+
+        // Attempt to join with invalid player colors
+        assertThrows(IllegalArgumentException.class, () -> {
+            gameService.joinGame("test-token", "GREEN", gameID);
+        });
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            gameService.joinGame("test-token", null, gameID);
+        });
+
+        // Verify neither position was assigned
+        GameData game = gameDAO.getGame(gameID);
+
+        assertNull(game.whiteUsername());
+        assertNull(game.blackUsername());
+    }
+
+    @Test
+    public void joinGameInvalidGameID() throws DataAccessException {
+        AuthDAO authDAO = new MemoryAuthDAO();
+        GameDAO gameDAO = new MemoryGameDAO();
+
+        GameService gameService = new GameService(gameDAO, authDAO);
+
+        // Create a valid authentication token
+        authDAO.createAuth(new AuthData("test-token", "bryce"));
+
+        // Attempt to join a game that doesn't exist
+        assertThrows(IllegalArgumentException.class, () -> {
+            gameService.joinGame("test-token", "WHITE", 999);
+        });
+
+        // Verify no games were created
+        assertTrue(gameDAO.listGames().isEmpty());
+    }
+
+    @Test
+    public void joinGameInvalidToken() throws DataAccessException {
+        AuthDAO authDAO = new MemoryAuthDAO();
+        GameDAO gameDAO = new MemoryGameDAO();
+
+        GameService gameService = new GameService(gameDAO, authDAO);
+
+        // Create a valid authentication token
+        authDAO.createAuth(new AuthData("valid-token", "bryce"));
+
+        // Create a chess game
+        int gameID = gameService.createGame("valid-token", "My Chess Game");
+
+        // Attempt to join with an invalid authentication token
+        assertThrows(SecurityException.class, () -> {
+            gameService.joinGame("invalid-token", "WHITE", gameID);
+        });
+
+        // Verify neither player position was assigned
+        GameData game = gameDAO.getGame(gameID);
+
+        assertNull(game.whiteUsername());
+        assertNull(game.blackUsername());
+    }
+
+    @Test
+    public void joinGameMissingToken() throws DataAccessException {
+        AuthDAO authDAO = new MemoryAuthDAO();
+        GameDAO gameDAO = new MemoryGameDAO();
+
+        GameService gameService = new GameService(gameDAO, authDAO);
+
+        // Create a valid authentication token
+        authDAO.createAuth(new AuthData("valid-token", "bryce"));
+
+        // Create a chess game
+        int gameID = gameService.createGame("valid-token", "My Chess Game");
+
+        // Attempt to join without an authentication token
+        assertThrows(SecurityException.class, () -> {
+            gameService.joinGame(null, "WHITE", gameID);
+        });
+
+        // Verify neither player position was assigned
+        GameData game = gameDAO.getGame(gameID);
+
+        assertNull(game.whiteUsername());
+        assertNull(game.blackUsername());
+    }
 }
