@@ -18,6 +18,7 @@ import handler.LoginHandler;
 import handler.LogoutHandler;
 import handler.ListGamesHandler;
 import service.GameService;
+import handler.CreateGameHandler;
 
 public class Server {
 
@@ -65,6 +66,9 @@ public class Server {
         GameService gameService = new GameService(gameDAO, authDAO);
         ListGamesHandler listGamesHandler = new ListGamesHandler(gameService);
 
+        // Create game service and handler
+        CreateGameHandler createGameHandler = new CreateGameHandler(gameService);
+
         // Clear Database
         javalin.delete("/db", clearHandler::clear);
 
@@ -79,6 +83,9 @@ public class Server {
 
         // List games
         javalin.get("/game", listGamesHandler::listGames);
+
+        // Create game
+        javalin.post("/game", createGameHandler::createGame);
     }
 
     public int run(int desiredPort) {
