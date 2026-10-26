@@ -96,4 +96,89 @@ public class GameServiceTest {
             gameService.listGames(null);
         });
     }
+
+    @Test
+    public void createGameSuccess() throws DataAccessException {
+        AuthDAO authDAO = new MemoryAuthDAO();
+        GameDAO gameDAO = new MemoryGameDAO();
+
+        GameService gameService = new GameService(gameDAO, authDAO);
+
+        // Create a valid authentication token
+        AuthData auth = new AuthData("test-token", "bryce");
+        authDAO.createAuth(auth);
+
+        // Create a new chess game
+        int gameID = gameService.createGame("test-token", "My Chess Game");
+
+        // Verify a valid game ID was assigned
+        assertTrue(gameID > 0);
+
+        // Retrieve the newly created game
+        GameData game = gameDAO.getGame(gameID);
+
+        // Verify the game was stored correctly
+        assertNotNull(game);
+        assertEquals("My Chess Game", game.gameName());
+        assertNull(game.whiteUsername());
+        assertNull(game.blackUsername());
+        assertNotNull(game.game());
+    }
+
+    @Test
+    public void createGameInvalidToken() {
+        AuthDAO authDAO = new MemoryAuthDAO();
+        GameDAO gameDAO = new MemoryGameDAO();
+
+        GameService gameService = new GameService(gameDAO, authDAO);
+
+        // Attempt to create a game with an invalid token
+        assertThrows(SecurityException.class, () -> {
+            gameService.createGame("invalid-token", "My Chess Game");
+        });
+    }
+
+    @Test
+    public void createGameMissingName() throws DataAccessException {
+        AuthDAO authDAO = new MemoryAuthDAO();
+        GameDAO gameDAO = new MemoryGameDAO();
+
+        GameService gameService = new GameService(gameDAO, authDAO);
+
+        // Create a valid authentication token
+        AuthData auth = new AuthData("test-token", "bryce");
+        authDAO.createAuth(auth);
+
+        // Attempt to create games with invalid names
+        assertThrows(IllegalArgumentException.class, () -> {
+            gameService.createGame("test-token", null);
+        });
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            gameService.createGame("test-token", "");
+        });
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            gameService.createGame("test-token", "   ");
+        });
+
+        // Verify that no games were created
+        assertTrue(gameDAO.listGames().isEmpty());
+    }
+
+    @Test
+    public void createGameMissingToken() throws DataAccessException {
+        AuthDAO authDAO = new MemoryAuthDAO();
+        GameDAO gameDAO = new MemoryGameDAO();
+
+        GameService gameService = new GameService(gameDAO, authDAO);
+
+        // Attempt to create a game without authentication
+        assertThrows(SecurityException.class, () -> {
+            gameService.createGame(null, "My Chess Game");
+        });
+
+        // Verify that no game was created
+        assertTrue(gameDAO.listGames().isEmpty());
+    }
 }
