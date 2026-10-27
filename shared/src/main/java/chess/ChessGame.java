@@ -203,13 +203,15 @@ public class ChessGame {
                 ChessPosition position = new ChessPosition(row, col);
                 ChessPiece piece = targetBoard.getPiece(position);
 
-                if (piece != null && piece.getTeamColor() != teamColor) {
-                    Collection<ChessMove> moves = piece.pieceMoves(targetBoard, position);
+                if (piece == null || piece.getTeamColor() == teamColor) {
+                    continue;
+                }
 
-                    for (ChessMove move : moves) {
-                        if (move.getEndPosition().equals(kingPosition)) {
-                            return true;
-                        }
+                Collection<ChessMove> moves = piece.pieceMoves(targetBoard, position);
+
+                for (ChessMove move : moves) {
+                    if (move.getEndPosition().equals(kingPosition)) {
+                        return true;
                     }
                 }
             }

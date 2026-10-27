@@ -50,19 +50,22 @@ public class PawnMovesCalculator implements PieceMovesCalculator {
             for (int colOffset : new int[]{-1, 1}) {
                 int captureCol = col + colOffset;
 
-                if (captureCol >= 1 && captureCol <= 8) {
-                    ChessPosition capturePosition = new ChessPosition(row, captureCol);
-                    ChessPiece capturePiece = board.getPiece(capturePosition);
+                if (captureCol < 1 || captureCol > 8) {
+                    continue;
+                }
 
-                    if (capturePiece != null &&
-                            capturePiece.getTeamColor() != myPiece.getTeamColor()) {
+                ChessPosition capturePosition = new ChessPosition(row, captureCol);
+                ChessPiece capturePiece = board.getPiece(capturePosition);
 
-                        if (row == promotionRow) {
-                            addPromotionMoves(moves, myPosition, capturePosition);
-                        } else {
-                            moves.add(new ChessMove(myPosition, capturePosition, null));
-                        }
-                    }
+                if (capturePiece == null ||
+                        capturePiece.getTeamColor() == myPiece.getTeamColor()) {
+                    continue;
+                }
+
+                if (row == promotionRow) {
+                    addPromotionMoves(moves, myPosition, capturePosition);
+                } else {
+                    moves.add(new ChessMove(myPosition, capturePosition, null));
                 }
             }
         }
