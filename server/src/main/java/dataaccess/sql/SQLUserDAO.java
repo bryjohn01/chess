@@ -22,11 +22,43 @@ public class SQLUserDAO implements UserDAO {
 
     @Override
     public void createUser(UserData user) throws DataAccessException {
+        String sql = "INSERT INTO users (username, password, email) VALUES (?, ?, ?)";
 
+        try (var conn = DatabaseManager.getConnection();
+             var statement = conn.prepareStatement(sql)) {
+
+            statement.setString(1, user.username());
+            statement.setString(2, user.password());
+            statement.setString(3, user.email());
+
+            statement.executeUpdate();
+        } catch (SQLException e) {
+            throw new DataAccessException("Failed to create user", e);
+        }
     }
 
     @Override
     public UserData getUser(String username) throws DataAccessException {
-        return null;
+        String sql = "SELECT username, password, email FROM users WHERE username = ?";
+
+        try (var conn = DatabaseManager.getConnection();
+             var statement = conn.prepareStatement(sql)) {
+
+            statement.setString(1, username);
+
+            try (var result = statement.executeQuery()) {
+                if (result.next()) {
+                    return new UserData(
+                            result.getString("username"),
+                            result.getString("password"),
+                            result.getString("email")
+                    );
+                }
+            }
+
+            return null;
+        } catch (SQLException e) {
+            throw new DataAccessException("Failed to get user", e);
+        }
     }
 }
