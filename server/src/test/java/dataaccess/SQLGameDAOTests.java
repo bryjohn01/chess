@@ -5,6 +5,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import chess.ChessGame;
 import model.GameData;
+import chess.ChessMove;
+import chess.ChessPosition;
+import chess.ChessPiece;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -129,5 +132,47 @@ public class SQLGameDAOTests {
 
         assertNull(gameDAO.getGame(999999));
         assertTrue(gameDAO.listGames().isEmpty());
+    }
+
+    @Test
+    public void makeMoveAfterLoadingGame() throws Exception {
+        ChessGame originalGame = new ChessGame();
+
+        GameData game = new GameData(
+                0, null, null, "Move Test", originalGame
+        );
+
+        int gameID = gameDAO.createGame(game);
+
+        GameData retrievedGame = gameDAO.getGame(gameID);
+
+        assertNotNull(retrievedGame);
+
+        ChessGame loadedGame = retrievedGame.game();
+
+        ChessMove move = new ChessMove(
+                new ChessPosition(2, 5),
+                new ChessPosition(4, 5),
+                null
+        );
+
+        loadedGame.makeMove(move);
+
+        assertEquals(
+                ChessGame.TeamColor.BLACK,
+                loadedGame.getTeamTurn()
+        );
+
+        assertNull(
+                loadedGame.getBoard().getPiece(new ChessPosition(2, 5))
+        );
+
+        ChessPiece movedPawn = loadedGame.getBoard().getPiece(
+                new ChessPosition(4, 5)
+        );
+
+        assertNotNull(movedPawn);
+        assertEquals(ChessPiece.PieceType.PAWN, movedPawn.getPieceType());
+        assertEquals(ChessGame.TeamColor.WHITE, movedPawn.getTeamColor());
     }
 }
