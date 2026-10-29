@@ -2,9 +2,10 @@ package server;
 
 import dataaccess.AuthDAO;
 import dataaccess.GameDAO;
-import dataaccess.MemoryAuthDAO;
-import dataaccess.MemoryGameDAO;
-import dataaccess.MemoryUserDAO;
+import dataaccess.sql.SQLAuthDAO;
+import dataaccess.sql.SQLGameDAO;
+import dataaccess.sql.SQLUserDAO;
+import dataaccess.DatabaseInitializer;
 import dataaccess.UserDAO;
 import handler.ClearHandler;
 import io.javalin.Javalin;
@@ -20,12 +21,19 @@ import handler.ListGamesHandler;
 import service.GameService;
 import handler.CreateGameHandler;
 import handler.JoinGameHandler;
+import dataaccess.DataAccessException;
 
 public class Server {
 
     private final Javalin javalin;
 
     public Server() {
+        try {
+            DatabaseInitializer.initialize();
+        } catch (DataAccessException e) {
+            throw new IllegalStateException("Failed to initialize database", e);
+        }
+
         javalin = Javalin.create(config -> {
             config.staticFiles.add("web");
 
@@ -45,9 +53,9 @@ public class Server {
         });
 
         // Create the data access objects
-        UserDAO userDAO = new MemoryUserDAO();
-        AuthDAO authDAO = new MemoryAuthDAO();
-        GameDAO gameDAO = new MemoryGameDAO();
+        UserDAO userDAO = new SQLUserDAO();
+        AuthDAO authDAO = new SQLAuthDAO();
+        GameDAO gameDAO = new SQLGameDAO();
 
         // Clear service and handler
         ClearService clearService = new ClearService(userDAO, authDAO, gameDAO);
