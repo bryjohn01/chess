@@ -10,6 +10,7 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.List;
 
 public class ServerFacade {
 
@@ -128,6 +129,30 @@ public class ServerFacade {
         throw new Exception("Create game failed: " + message);
     }
 
+    public List<GameSummary> listGames(String authToken)
+            throws Exception {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(serverUrl + "/game"))
+                .header("Authorization", authToken)
+                .GET()
+                .build();
+
+        HttpResponse<String> response = sendRequest(request);
+
+        if (response.statusCode() == 200) {
+            ListGamesResponse gamesResponse =
+                    gson.fromJson(response.body(), ListGamesResponse.class);
+            return gamesResponse.games();
+        }
+
+        String message = switch (response.statusCode()) {
+            case 401 -> "Invalid or expired authentication token";
+            default -> "An unexpected server error occurred";
+        };
+
+        throw new Exception("List games failed: " + message);
+    }
+
     private HttpResponse<String> sendRequest(HttpRequest request)
             throws Exception {
 
@@ -155,4 +180,15 @@ public class ServerFacade {
             default -> "An unexpected server error occurred";
         };
     }
+
+    public record GameSummary(
+            int gameID,
+            String whiteUsername,
+            String blackUsername,
+            String gameName
+    ) {}
+
+    private record ListGamesResponse(
+            List<GameSummary> games
+    ) {}
 }

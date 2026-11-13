@@ -197,4 +197,60 @@ public class ServerFacadeTests {
                 exception.getMessage()
         );
     }
+
+    @Test
+    public void listGamesSuccess() throws Exception {
+        // Register a user and obtain an authentication token.
+        AuthData auth = facade.register(
+                "gameviewer",
+                "password123",
+                "viewer@example.com"
+        );
+
+        // Create two games.
+        int firstGameID = facade.createGame(
+                auth.authToken(),
+                "First Chess Game"
+        );
+
+        int secondGameID = facade.createGame(
+                auth.authToken(),
+                "Second Chess Game"
+        );
+
+        // Retrieve the list of games.
+        var games = facade.listGames(auth.authToken());
+
+        // Verify both games were returned.
+        Assertions.assertEquals(2, games.size());
+
+        Assertions.assertTrue(games.stream().anyMatch(game ->
+                game.gameID() == firstGameID
+                        && game.gameName().equals("First Chess Game")
+        ));
+
+        Assertions.assertTrue(games.stream().anyMatch(game ->
+                game.gameID() == secondGameID
+                        && game.gameName().equals("Second Chess Game")
+        ));
+
+        // Neither game should have players assigned yet.
+        games.forEach(game -> {
+            Assertions.assertNull(game.whiteUsername());
+            Assertions.assertNull(game.blackUsername());
+        });
+    }
+
+    @Test
+    public void listGamesInvalidToken() {
+        Exception exception = Assertions.assertThrows(
+                Exception.class,
+                () -> facade.listGames("invalid-auth-token")
+        );
+
+        Assertions.assertEquals(
+                "List games failed: Invalid or expired authentication token",
+                exception.getMessage()
+        );
+    }
 }
