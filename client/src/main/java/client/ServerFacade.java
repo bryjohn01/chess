@@ -33,25 +33,17 @@ public class ServerFacade {
                 .POST(HttpRequest.BodyPublishers.ofString(requestBody))
                 .build();
 
-        try {
-            HttpResponse<String> response = httpClient.send(
-                    request,
-                    HttpResponse.BodyHandlers.ofString()
-            );
 
-            if (response.statusCode() == 200) {
-                return gson.fromJson(response.body(), AuthData.class);
-            }
+        HttpResponse<String> response = sendRequest(request);
 
-            throw new Exception("Registration failed: " +
-                    getErrorMessage(response.statusCode()));
-
-        } catch (IOException e) {
-            throw new Exception("Unable to connect to the chess server", e);
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new Exception("Registration request was interrupted", e);
+        if (response.statusCode() == 200) {
+            return gson.fromJson(response.body(), AuthData.class);
         }
+
+        throw new Exception(
+                "Registration failed: " +
+                        getErrorMessage(response.statusCode())
+        );
     }
 
     public AuthData login(String username, String password)
@@ -68,29 +60,38 @@ public class ServerFacade {
                 .POST(HttpRequest.BodyPublishers.ofString(requestBody))
                 .build();
 
+        HttpResponse<String> response = sendRequest(request);
+
+        if (response.statusCode() == 200) {
+            return gson.fromJson(response.body(), AuthData.class);
+        }
+
+        String message = switch (response.statusCode()) {
+            case 400 -> "Invalid login information";
+            case 401 -> "Incorrect username or password";
+            default -> "An unexpected server error occurred";
+        };
+
+        throw new Exception("Login failed: " + message);
+    }
+
+    private HttpResponse<String> sendRequest(HttpRequest request)
+            throws Exception {
+
         try {
-            HttpResponse<String> response = httpClient.send(
+            return httpClient.send(
                     request,
                     HttpResponse.BodyHandlers.ofString()
             );
-
-            if (response.statusCode() == 200) {
-                return gson.fromJson(response.body(), AuthData.class);
-            }
-
-            String message = switch (response.statusCode()) {
-                case 400 -> "Invalid login information";
-                case 401 -> "Incorrect username or password";
-                default -> "An unexpected server error occurred";
-            };
-
-            throw new Exception("Login failed: " + message);
-
         } catch (IOException e) {
-            throw new Exception("Unable to connect to the chess server", e);
+            throw new Exception(
+                    "Unable to connect to the chess server", e
+            );
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            throw new Exception("Login request was interrupted", e);
+            throw new Exception(
+                    "Request was interrupted", e
+            );
         }
     }
 
