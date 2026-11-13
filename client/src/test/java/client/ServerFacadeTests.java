@@ -162,4 +162,39 @@ public class ServerFacadeTests {
                 exception.getMessage()
         );
     }
+
+    @Test
+    public void createGameSuccess() throws Exception {
+        // Register a user and obtain an authentication token.
+        AuthData auth = facade.register(
+                "gamecreator",
+                "password123",
+                "creator@example.com"
+        );
+
+        // Create a chess game.
+        int gameID = facade.createGame(
+                auth.authToken(),
+                "My First Chess Game"
+        );
+
+        // Verify the server returned a valid game ID.
+        Assertions.assertTrue(gameID > 0);
+    }
+
+    @Test
+    public void createGameInvalidToken() {
+        Exception exception = Assertions.assertThrows(
+                Exception.class,
+                () -> facade.createGame(
+                        "invalid-auth-token",
+                        "Unauthorized Game"
+                )
+        );
+
+        Assertions.assertEquals(
+                "Create game failed: Invalid or expired authentication token",
+                exception.getMessage()
+        );
+    }
 }

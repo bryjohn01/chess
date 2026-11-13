@@ -96,6 +96,38 @@ public class ServerFacade {
         throw new Exception("Logout failed: " + message);
     }
 
+    public int createGame(String authToken, String gameName)
+            throws Exception {
+        record CreateGameRequest(String gameName) {}
+        record CreateGameResponse(int gameID) {}
+
+        CreateGameRequest createRequest = new CreateGameRequest(gameName);
+        String requestBody = gson.toJson(createRequest);
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(serverUrl + "/game"))
+                .header("Authorization", authToken)
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+                .build();
+
+        HttpResponse<String> response = sendRequest(request);
+
+        if (response.statusCode() == 200) {
+            CreateGameResponse gameResponse =
+                    gson.fromJson(response.body(), CreateGameResponse.class);
+            return gameResponse.gameID();
+        }
+
+        String message = switch (response.statusCode()) {
+            case 400 -> "Invalid game name";
+            case 401 -> "Invalid or expired authentication token";
+            default -> "An unexpected server error occurred";
+        };
+
+        throw new Exception("Create game failed: " + message);
+    }
+
     private HttpResponse<String> sendRequest(HttpRequest request)
             throws Exception {
 
