@@ -253,4 +253,80 @@ public class ServerFacadeTests {
                 exception.getMessage()
         );
     }
+
+    @Test
+    public void joinGameSuccess() throws Exception {
+        // Register a user and obtain an authentication token.
+        AuthData auth = facade.register(
+                "joinplayer",
+                "password123",
+                "join@example.com"
+        );
+
+        // Create a chess game.
+        int gameID = facade.createGame(
+                auth.authToken(),
+                "Join Test Game"
+        );
+
+        // Join the game as the white player.
+        Assertions.assertDoesNotThrow(
+                () -> facade.joinGame(auth.authToken(), "WHITE", gameID)
+        );
+
+        // Retrieve the games to verify the player was assigned.
+        var games = facade.listGames(auth.authToken());
+
+        var joinedGame = games.stream()
+                .filter(game -> game.gameID() == gameID)
+                .findFirst()
+                .orElseThrow();
+
+        Assertions.assertEquals(
+                "joinplayer",
+                joinedGame.whiteUsername()
+        );
+
+        Assertions.assertNull(joinedGame.blackUsername());
+    }
+
+    @Test
+    public void joinGamePositionAlreadyTaken() throws Exception {
+        // Register two different users.
+        AuthData firstPlayer = facade.register(
+                "firstplayer",
+                "password123",
+                "first@example.com"
+        );
+
+        AuthData secondPlayer = facade.register(
+                "secondplayer",
+                "password123",
+                "second@example.com"
+        );
+
+        // Create a chess game.
+        int gameID = facade.createGame(
+                firstPlayer.authToken(),
+                "Occupied Position Test"
+        );
+
+        // First player joins as white.
+        facade.joinGame(firstPlayer.authToken(), "WHITE", gameID);
+
+        // Second player attempts to take the same position.
+        Exception exception = Assertions.assertThrows(
+                Exception.class,
+                () -> facade.joinGame(
+                        secondPlayer.authToken(),
+                        "WHITE",
+                        gameID
+                )
+        );
+
+        Assertions.assertEquals(
+                "Join game failed: Selected player position is already taken",
+                exception.getMessage()
+        );
+    }
 }

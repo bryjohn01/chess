@@ -153,6 +153,38 @@ public class ServerFacade {
         throw new Exception("List games failed: " + message);
     }
 
+    public void joinGame(String authToken, String playerColor, int gameID)
+            throws Exception {
+        record JoinGameRequest(String playerColor, int gameID) {}
+
+        JoinGameRequest joinRequest =
+                new JoinGameRequest(playerColor, gameID);
+
+        String requestBody = gson.toJson(joinRequest);
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(serverUrl + "/game"))
+                .header("Authorization", authToken)
+                .header("Content-Type", "application/json")
+                .PUT(HttpRequest.BodyPublishers.ofString(requestBody))
+                .build();
+
+        HttpResponse<String> response = sendRequest(request);
+
+        if (response.statusCode() == 200) {
+            return;
+        }
+
+        String message = switch (response.statusCode()) {
+            case 400 -> "Invalid game ID or player color";
+            case 401 -> "Invalid or expired authentication token";
+            case 403 -> "Selected player position is already taken";
+            default -> "An unexpected server error occurred";
+        };
+
+        throw new Exception("Join game failed: " + message);
+    }
+
     private HttpResponse<String> sendRequest(HttpRequest request)
             throws Exception {
 
