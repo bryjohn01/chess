@@ -123,4 +123,43 @@ public class ServerFacadeTests {
                 exception.getMessage()
         );
     }
+
+    @Test
+    public void logoutSuccess() throws Exception {
+        // Register a user and obtain an authentication token.
+        AuthData auth = facade.register(
+                "logoutplayer",
+                "password123",
+                "logout@example.com"
+        );
+
+        // Log out using the authentication token.
+        Assertions.assertDoesNotThrow(
+                () -> facade.logout(auth.authToken())
+        );
+
+        // Verify the token can no longer be used.
+        Exception exception = Assertions.assertThrows(
+                Exception.class,
+                () -> facade.logout(auth.authToken())
+        );
+
+        Assertions.assertEquals(
+                "Logout failed: Invalid or expired authentication token",
+                exception.getMessage()
+        );
+    }
+
+    @Test
+    public void logoutInvalidToken() {
+        Exception exception = Assertions.assertThrows(
+                Exception.class,
+                () -> facade.logout("invalid-auth-token")
+        );
+
+        Assertions.assertEquals(
+                "Logout failed: Invalid or expired authentication token",
+                exception.getMessage()
+        );
+    }
 }

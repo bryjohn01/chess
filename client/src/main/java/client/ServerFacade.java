@@ -75,6 +75,27 @@ public class ServerFacade {
         throw new Exception("Login failed: " + message);
     }
 
+    public void logout(String authToken) throws Exception {
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(serverUrl + "/session"))
+                .header("Authorization", authToken)
+                .DELETE()
+                .build();
+
+        HttpResponse<String> response = sendRequest(request);
+
+        if (response.statusCode() == 200) {
+            return;
+        }
+
+        String message = switch (response.statusCode()) {
+            case 401 -> "Invalid or expired authentication token";
+            default -> "An unexpected server error occurred";
+        };
+
+        throw new Exception("Logout failed: " + message);
+    }
+
     private HttpResponse<String> sendRequest(HttpRequest request)
             throws Exception {
 
