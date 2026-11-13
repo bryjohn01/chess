@@ -79,4 +79,48 @@ public class ServerFacadeTests {
         );
     }
 
+    @Test
+    public void loginSuccess() throws Exception {
+        // Register a user first so they exist in the database.
+        facade.register(
+                "loginplayer",
+                "password123",
+                "login@example.com"
+        );
+
+        // Log in with the registered credentials.
+        AuthData auth = facade.login(
+                "loginplayer",
+                "password123"
+        );
+
+        Assertions.assertNotNull(auth);
+        Assertions.assertEquals("loginplayer", auth.username());
+        Assertions.assertNotNull(auth.authToken());
+        Assertions.assertFalse(auth.authToken().isEmpty());
+    }
+
+    @Test
+    public void loginIncorrectPassword() throws Exception {
+        // Register a user with a known password.
+        facade.register(
+                "loginplayer",
+                "password123",
+                "login@example.com"
+        );
+
+        // Attempt to log in with an incorrect password.
+        Exception exception = Assertions.assertThrows(
+                Exception.class,
+                () -> facade.login(
+                        "loginplayer",
+                        "wrongpassword"
+                )
+        );
+
+        Assertions.assertEquals(
+                "Login failed: Incorrect username or password",
+                exception.getMessage()
+        );
+    }
 }

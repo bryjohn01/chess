@@ -54,6 +54,46 @@ public class ServerFacade {
         }
     }
 
+    public AuthData login(String username, String password)
+            throws Exception {
+
+        record LoginRequest(String username, String password) {}
+
+        LoginRequest loginRequest = new LoginRequest(username, password);
+        String requestBody = gson.toJson(loginRequest);
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(serverUrl + "/session"))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+                .build();
+
+        try {
+            HttpResponse<String> response = httpClient.send(
+                    request,
+                    HttpResponse.BodyHandlers.ofString()
+            );
+
+            if (response.statusCode() == 200) {
+                return gson.fromJson(response.body(), AuthData.class);
+            }
+
+            String message = switch (response.statusCode()) {
+                case 400 -> "Invalid login information";
+                case 401 -> "Incorrect username or password";
+                default -> "An unexpected server error occurred";
+            };
+
+            throw new Exception("Login failed: " + message);
+
+        } catch (IOException e) {
+            throw new Exception("Unable to connect to the chess server", e);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new Exception("Login request was interrupted", e);
+        }
+    }
+
     private String getErrorMessage(int statusCode) {
         return switch (statusCode) {
             case 400 -> "Invalid registration information";
