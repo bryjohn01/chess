@@ -54,6 +54,22 @@ public class ChessClient {
                     }
                 }
 
+                case "create" -> {
+                    if (isLoggedIn()) {
+                        createGame();
+                    } else {
+                        System.out.println("You must be logged in to create a game.");
+                    }
+                }
+
+                case "list" -> {
+                    if (isLoggedIn()) {
+                        listGames();
+                    } else {
+                        System.out.println("You must be logged in to list games.");
+                    }
+                }
+
                 default -> System.out.println(
                         "Unknown command. Type 'help' for available commands."
                 );
@@ -132,6 +148,58 @@ public class ChessClient {
 
             System.out.println("Logout successful!");
             System.out.println("Goodbye, " + username + "!");
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    private void createGame() {
+        try {
+            System.out.print("Game name: ");
+            String gameName = scanner.nextLine().trim();
+
+            if (gameName.isEmpty()) {
+                System.out.println("Game name cannot be empty.");
+                return;
+            }
+
+            facade.createGame(currentUser.authToken(), gameName);
+
+            System.out.println("Game created successfully!");
+            System.out.println("Game name: " + gameName);
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    private void listGames() {
+        try {
+            var games = facade.listGames(currentUser.authToken());
+
+            if (games.isEmpty()) {
+                System.out.println("No chess games available.");
+                return;
+            }
+
+            System.out.println("\nAvailable Chess Games:");
+
+            for (int i = 0; i < games.size(); i++) {
+                var game = games.get(i);
+
+                String whitePlayer = game.whiteUsername() == null
+                        ? "Available"
+                        : game.whiteUsername();
+
+                String blackPlayer = game.blackUsername() == null
+                        ? "Available"
+                        : game.blackUsername();
+
+                System.out.println((i + 1) + ". " + game.gameName());
+                System.out.println("   White: " + whitePlayer);
+                System.out.println("   Black: " + blackPlayer);
+            }
 
         } catch (Exception e) {
             System.out.println(e.getMessage());
