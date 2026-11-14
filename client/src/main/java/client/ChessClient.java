@@ -29,8 +29,12 @@ public class ChessClient {
                 case "help" -> showHelp();
 
                 case "quit" -> {
-                    System.out.println("Goodbye!");
-                    running = false;
+                    if (!isLoggedIn()) {
+                        System.out.println("Goodbye!");
+                        running = false;
+                    } else {
+                        System.out.println("Please log out before quitting.");
+                    }
                 }
 
                 case "register" -> {
@@ -136,7 +140,7 @@ public class ChessClient {
             System.out.println("Welcome, " + currentUser.username() + "!");
 
         } catch (Exception e) {
-            System.out.println("Registration failed: " + e.getMessage());
+            System.out.println(e.getMessage());
         }
     }
 

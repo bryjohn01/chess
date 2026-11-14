@@ -4,8 +4,8 @@ import dataaccess.*;
 import model.AuthData;
 import model.UserData;
 import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.*;
+import org.mindrot.jbcrypt.BCrypt;
 
 public class UserServiceTest {
 
@@ -26,7 +26,13 @@ public class UserServiceTest {
 
         assertEquals("bryce", result.username());
         assertNotNull(result.authToken());
-        assertEquals(user, userDAO.getUser("bryce"));
+        UserData storedUser = userDAO.getUser("bryce");
+
+        assertNotNull(storedUser);
+        assertEquals(user.username(), storedUser.username());
+        assertEquals(user.email(), storedUser.email());
+        assertNotEquals(user.password(), storedUser.password());
+        assertTrue(BCrypt.checkpw(user.password(), storedUser.password()));
         assertEquals(result, authDAO.getAuth(result.authToken()));
     }
 
@@ -55,7 +61,12 @@ public class UserServiceTest {
             userService.register(duplicateUser);
         });
 
-        assertEquals(firstUser, userDAO.getUser("bryce"));
+        UserData storedUser = userDAO.getUser("bryce");
+
+        assertNotNull(storedUser);
+        assertEquals(firstUser.username(), storedUser.username());
+        assertEquals(firstUser.email(), storedUser.email());
+        assertTrue(BCrypt.checkpw(firstUser.password(), storedUser.password()));
     }
 
     @Test
@@ -126,7 +137,7 @@ public class UserServiceTest {
                 "bryce@example.com"
         );
 
-        userDAO.createUser(user);
+        userService.register(user);
 
         // Log in with the correct credentials
         AuthData result = userService.login("bryce", "password123");
@@ -152,7 +163,7 @@ public class UserServiceTest {
                 "bryce@example.com"
         );
 
-        userDAO.createUser(user);
+        userService.register(user);
 
         // Attempt login with an incorrect password
         assertThrows(SecurityException.class, () -> {
