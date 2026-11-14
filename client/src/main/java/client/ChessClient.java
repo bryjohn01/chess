@@ -5,6 +5,7 @@ import model.AuthData;
 import chess.ChessBoard;
 import chess.ChessGame;
 import ui.ChessBoardRenderer;
+import java.util.List;
 
 public class ChessClient {
 
@@ -224,41 +225,50 @@ public class ChessClient {
         }
     }
 
+    private ServerFacade.GameSummary selectGame(
+            List<ServerFacade.GameSummary> games) {
+
+        if (games.isEmpty()) {
+            System.out.println("No chess games available.");
+            return null;
+        }
+
+        for (int i = 0; i < games.size(); i++) {
+            System.out.println(
+                    (i + 1) + ". " + games.get(i).gameName()
+            );
+        }
+
+        System.out.print("\nEnter game number: ");
+        String selection = scanner.nextLine().trim();
+
+        int gameNumber;
+
+        try {
+            gameNumber = Integer.parseInt(selection);
+        } catch (NumberFormatException e) {
+            System.out.println("Please enter a valid game number.");
+            return null;
+        }
+
+        if (gameNumber < 1 || gameNumber > games.size()) {
+            System.out.println("Game number is out of range.");
+            return null;
+        }
+
+        return games.get(gameNumber - 1);
+    }
+
     private void playGame() {
         try {
             var games = facade.listGames(currentUser.authToken());
 
-            if (games.isEmpty()) {
-                System.out.println("No chess games available.");
-                return;
-            }
-
             System.out.println("\nSelect a Chess Game:");
+            var selectedGame = selectGame(games);
 
-            for (int i = 0; i < games.size(); i++) {
-                System.out.println(
-                        (i + 1) + ". " + games.get(i).gameName()
-                );
-            }
-
-            System.out.print("\nEnter game number: ");
-            String selection = scanner.nextLine().trim();
-
-            int gameNumber;
-
-            try {
-                gameNumber = Integer.parseInt(selection);
-            } catch (NumberFormatException e) {
-                System.out.println("Please enter a valid game number.");
+            if (selectedGame == null) {
                 return;
             }
-
-            if (gameNumber < 1 || gameNumber > games.size()) {
-                System.out.println("Game number is out of range.");
-                return;
-            }
-
-            var selectedGame = games.get(gameNumber - 1);
 
             System.out.println("Selected game: " + selectedGame.gameName());
 
@@ -298,37 +308,12 @@ public class ChessClient {
         try {
             var games = facade.listGames(currentUser.authToken());
 
-            if (games.isEmpty()) {
-                System.out.println("No chess games available.");
-                return;
-            }
-
             System.out.println("\nSelect a Chess Game to Observe:");
+            var selectedGame = selectGame(games);
 
-            for (int i = 0; i < games.size(); i++) {
-                System.out.println(
-                        (i + 1) + ". " + games.get(i).gameName()
-                );
-            }
-
-            System.out.print("\nEnter game number: ");
-            String selection = scanner.nextLine().trim();
-
-            int gameNumber;
-
-            try {
-                gameNumber = Integer.parseInt(selection);
-            } catch (NumberFormatException e) {
-                System.out.println("Please enter a valid game number.");
+            if (selectedGame == null) {
                 return;
             }
-
-            if (gameNumber < 1 || gameNumber > games.size()) {
-                System.out.println("Game number is out of range.");
-                return;
-            }
-
-            var selectedGame = games.get(gameNumber - 1);
 
             System.out.println("Observing game: " + selectedGame.gameName());
 
