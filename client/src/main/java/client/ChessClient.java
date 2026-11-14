@@ -1,8 +1,10 @@
-
 package client;
 
 import java.util.Scanner;
 import model.AuthData;
+import chess.ChessBoard;
+import chess.ChessGame;
+import ui.ChessBoardRenderer;
 
 public class ChessClient {
 
@@ -75,6 +77,14 @@ public class ChessClient {
                         playGame();
                     } else {
                         System.out.println("You must be logged in to play a game.");
+                    }
+                }
+
+                case "observe" -> {
+                    if (isLoggedIn()) {
+                        observeGame();
+                    } else {
+                        System.out.println("You must be logged in to observe a game.");
                     }
                 }
 
@@ -269,6 +279,64 @@ public class ChessClient {
             System.out.println("Successfully joined the game!");
             System.out.println("Game: " + selectedGame.gameName());
             System.out.println("Playing as: " + playerColor);
+
+            ChessBoard board = new ChessBoard();
+            board.resetBoard();
+
+            ChessBoardRenderer renderer = new ChessBoardRenderer();
+            renderer.drawBoard(
+                    board,
+                    ChessGame.TeamColor.valueOf(playerColor)
+            );
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    private void observeGame() {
+        try {
+            var games = facade.listGames(currentUser.authToken());
+
+            if (games.isEmpty()) {
+                System.out.println("No chess games available.");
+                return;
+            }
+
+            System.out.println("\nSelect a Chess Game to Observe:");
+
+            for (int i = 0; i < games.size(); i++) {
+                System.out.println(
+                        (i + 1) + ". " + games.get(i).gameName()
+                );
+            }
+
+            System.out.print("\nEnter game number: ");
+            String selection = scanner.nextLine().trim();
+
+            int gameNumber;
+
+            try {
+                gameNumber = Integer.parseInt(selection);
+            } catch (NumberFormatException e) {
+                System.out.println("Please enter a valid game number.");
+                return;
+            }
+
+            if (gameNumber < 1 || gameNumber > games.size()) {
+                System.out.println("Game number is out of range.");
+                return;
+            }
+
+            var selectedGame = games.get(gameNumber - 1);
+
+            System.out.println("Observing game: " + selectedGame.gameName());
+
+            ChessBoard board = new ChessBoard();
+            board.resetBoard();
+
+            ChessBoardRenderer renderer = new ChessBoardRenderer();
+            renderer.drawBoard(board, ChessGame.TeamColor.WHITE);
 
         } catch (Exception e) {
             System.out.println(e.getMessage());
