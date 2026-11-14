@@ -70,6 +70,14 @@ public class ChessClient {
                     }
                 }
 
+                case "play" -> {
+                    if (isLoggedIn()) {
+                        playGame();
+                    } else {
+                        System.out.println("You must be logged in to play a game.");
+                    }
+                }
+
                 default -> System.out.println(
                         "Unknown command. Type 'help' for available commands."
                 );
@@ -200,6 +208,67 @@ public class ChessClient {
                 System.out.println("   White: " + whitePlayer);
                 System.out.println("   Black: " + blackPlayer);
             }
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+        }
+    }
+
+    private void playGame() {
+        try {
+            var games = facade.listGames(currentUser.authToken());
+
+            if (games.isEmpty()) {
+                System.out.println("No chess games available.");
+                return;
+            }
+
+            System.out.println("\nSelect a Chess Game:");
+
+            for (int i = 0; i < games.size(); i++) {
+                System.out.println(
+                        (i + 1) + ". " + games.get(i).gameName()
+                );
+            }
+
+            System.out.print("\nEnter game number: ");
+            String selection = scanner.nextLine().trim();
+
+            int gameNumber;
+
+            try {
+                gameNumber = Integer.parseInt(selection);
+            } catch (NumberFormatException e) {
+                System.out.println("Please enter a valid game number.");
+                return;
+            }
+
+            if (gameNumber < 1 || gameNumber > games.size()) {
+                System.out.println("Game number is out of range.");
+                return;
+            }
+
+            var selectedGame = games.get(gameNumber - 1);
+
+            System.out.println("Selected game: " + selectedGame.gameName());
+
+            System.out.print("Choose your color (WHITE/BLACK): ");
+            String playerColor = scanner.nextLine().trim().toUpperCase();
+
+            if (!playerColor.equals("WHITE") && !playerColor.equals("BLACK")) {
+                System.out.println("Invalid color. Please choose WHITE or BLACK.");
+                return;
+            }
+
+            facade.joinGame(
+                    currentUser.authToken(),
+                    playerColor,
+                    selectedGame.gameID()
+            );
+
+            System.out.println("Successfully joined the game!");
+            System.out.println("Game: " + selectedGame.gameName());
+            System.out.println("Playing as: " + playerColor);
 
         } catch (Exception e) {
             System.out.println(e.getMessage());
